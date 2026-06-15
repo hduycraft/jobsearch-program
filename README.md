@@ -16,7 +16,7 @@ It helps a candidate keep job opportunities organized, compare their profile aga
 
 ## Current Status
 
-Phase 3 is complete.
+Phase 4 is complete.
 
 The app currently includes:
 
@@ -24,13 +24,15 @@ The app currently includes:
 - `GET /health`
 - Database-backed job CRUD endpoints under `/jobs`
 - Application tracking endpoints under `/applications`
+- Profile management endpoints under `/profiles`
 - SQLAlchemy ORM model for jobs.
 - SQLAlchemy ORM model for applications with a one-to-one job relationship.
-- Alembic migrations for the `jobs` and `applications` tables.
+- SQLAlchemy ORM model for candidate profiles.
+- Alembic migrations for the `jobs`, `applications`, and `profiles` tables.
 - PostgreSQL configuration via `DATABASE_URL`.
 - Docker Compose service for local PostgreSQL.
 - Swagger/OpenAPI availability tests.
-- Job and application endpoint tests.
+- Job, application, and profile endpoint tests.
 - A detailed build plan in [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md).
 
 ## Tech Stack

@@ -34,7 +34,7 @@ It is also designed as a learning project for backend development, API design, d
 
 ## Current Status
 
-Phase 3 is complete.
+Phase 4 is complete.
 
 The current app includes:
 
@@ -42,12 +42,14 @@ The current app includes:
 - A `GET /health` endpoint.
 - Database-backed job CRUD endpoints.
 - Application tracking endpoints with statuses, notes, next actions, deadlines, and applied dates.
+- Profile management endpoints for target roles, skills, experience summary, and projects.
 - SQLAlchemy job model.
 - SQLAlchemy application model linked one-to-one with jobs.
-- Alembic migrations for the jobs and applications tables.
+- SQLAlchemy profile model.
+- Alembic migrations for the jobs, applications, and profiles tables.
 - Docker Compose PostgreSQL service.
 - Swagger/OpenAPI availability tests.
-- Job and application endpoint tests.
+- Job, application, and profile endpoint tests.
 - A detailed phase roadmap in `PROJECT_ROADMAP.md`.
 
 Run the API:

@@ -6,7 +6,7 @@ The project is built in small working phases. Future sessions should read this r
 
 ## Current Status
 
-- Phase 3 is complete.
+- Phase 4 is complete.
 - The app has a minimal FastAPI backend and database-backed job tracker.
 - `GET /health` returns `{"status": "ok"}`.
 - Swagger UI and OpenAPI schema are covered by tests.
@@ -14,10 +14,13 @@ The project is built in small working phases. Future sessions should read this r
 - Job CRUD now uses SQLAlchemy persistence instead of in-memory storage.
 - Application tracking endpoints are covered by tests.
 - Application tracking uses a database-backed one-to-one relationship with jobs.
+- Profile management endpoints are covered by tests.
+- Profiles store target roles, skills, experience summaries, and structured projects.
 - Alembic is configured with an initial `jobs` table migration.
 - Alembic includes an `applications` table migration.
+- Alembic includes a `profiles` table migration.
 - Docker Compose can start a local PostgreSQL database.
-- Next phase: Phase 4, Profile Module.
+- Next phase: Phase 5, Job Description Analyzer.
 
 ## Ethical Scope
 
@@ -104,7 +107,8 @@ careermatch-assistant/
 |   |-- api/
 |   |   |-- __init__.py
 |   |   |-- routes_applications.py
-|   |   `-- routes_jobs.py
+|   |   |-- routes_jobs.py
+|   |   `-- routes_profiles.py
 |   |-- core/
 |   |   |-- __init__.py
 |   |   |-- config.py
@@ -112,26 +116,31 @@ careermatch-assistant/
 |   |-- models/
 |   |   |-- __init__.py
 |   |   |-- application.py
-|   |   `-- job.py
+|   |   |-- job.py
+|   |   `-- profile.py
 |   `-- schemas/
 |       |-- __init__.py
 |       |-- application.py
-|       `-- job.py
+|       |-- job.py
+|       `-- profile.py
 |-- alembic/
 |   |-- env.py
 |   |-- script.py.mako
 |   `-- versions/
 |       |-- 0001_create_jobs_table.py
-|       `-- 0002_create_applications_table.py
+|       |-- 0002_create_applications_table.py
+|       `-- 0003_create_profiles_table.py
 |-- tests/
 |   |-- conftest.py
 |   |-- test_applications.py
 |   |-- test_jobs.py
+|   |-- test_profiles.py
 |   `-- test_swagger.py
 |-- .env.example
 |-- alembic.ini
 |-- docker-compose.yml
 |-- PROJECT_ROADMAP.md
+|-- PROJECT_OVERVIEW.md
 |-- README.md
 `-- requirements.txt
 ```
@@ -184,7 +193,6 @@ If this is too much for a phase, simplify while keeping clear boundaries between
 Profile:
 
 - `id`
-- `name`
 - `target_roles`
 - `skills`
 - `experience_summary`
@@ -512,22 +520,24 @@ Commit message suggestion:
 Add application tracking
 ```
 
-### Phase 4: Profile Module
+### Phase 4: Profile Module - Complete
 
 Goal: Store a career profile for matching.
 
-Build:
+Built:
 
 - Profile model
 - Profile schemas
 - Profile routes
+- Alembic migration for the `profiles` table
+- Profile endpoint tests
 
-Profile should include:
+Profile includes:
 
 - Target roles
 - Skills
 - Experience summary
-- Projects
+- Structured projects with name, description, skills, and URL
 
 Endpoints:
 
@@ -545,6 +555,14 @@ Learning focus:
 Expected result:
 
 - A career profile can be stored and used later for matching.
+
+Implemented behavior:
+
+- Profiles can be created with target roles, skills, experience summary, and projects.
+- Profile list and detail endpoints return stored profiles.
+- Profile patch updates only the fields sent in the request.
+- Missing profile IDs return `404`.
+- Empty profile creation defaults list fields to empty lists.
 
 Commit message suggestion:
 
