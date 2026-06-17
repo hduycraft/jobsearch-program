@@ -6,7 +6,7 @@ The project is built in small working phases. Future sessions should read this r
 
 ## Current Status
 
-- Phase 6 is complete.
+- Phase 8 is complete.
 - The app has a minimal FastAPI backend and database-backed job tracker.
 - `GET /health` returns `{"status": "ok"}`.
 - Swagger UI and OpenAPI schema are covered by tests.
@@ -20,11 +20,15 @@ The project is built in small working phases. Future sessions should read this r
 - Job descriptions can be analyzed for known skills, seniority, and requirement summaries.
 - Match scoring endpoint is covered by tests.
 - Profiles can be compared against jobs with explainable strengths, gaps, and recommendations.
+- CV tailoring suggestion endpoint is covered by tests.
+- CV suggestions produce grounded summaries, project highlights, bullet ideas, missing keyword warnings, and an ethical warning.
+- Interview prep endpoint is covered by tests.
+- Interview prep generates technical questions, HR questions, study topics, weak areas, and a 3-day preparation plan.
 - Alembic is configured with an initial `jobs` table migration.
 - Alembic includes an `applications` table migration.
 - Alembic includes a `profiles` table migration.
 - Docker Compose can start a local PostgreSQL database.
-- Next phase: Phase 7, CV Tailoring Suggestions.
+- Next phase: Phase 9, Add LLM Provider Interface.
 
 ## Ethical Scope
 
@@ -131,6 +135,8 @@ careermatch-assistant/
 |       `-- profile.py
 |   `-- services/
 |       |-- __init__.py
+|       |-- cv_tailor.py
+|       |-- interview_prep.py
 |       |-- job_analyzer.py
 |       `-- matcher.py
 |-- alembic/
@@ -713,7 +719,7 @@ Commit message suggestion:
 Add explainable profile job match scoring
 ```
 
-### Phase 7: CV Tailoring Suggestions
+### Phase 7: CV Tailoring Suggestions - Complete
 
 Goal: Generate suggestions for improving a CV for a specific job without using an LLM first.
 
@@ -745,13 +751,22 @@ Expected result:
 
 - The app gives useful CV improvement suggestions based on real profile data.
 
+Implemented behavior:
+
+- `POST /analysis/cv-suggestions` accepts a `profile_id` and `job_id`.
+- The endpoint loads the stored profile and job from the database.
+- The CV tailoring service reuses rule-based job analysis and match scoring outputs.
+- The response includes a tailored summary suggestion, projects to highlight, CV bullet suggestions, missing keyword warnings, and an ethical warning.
+- Missing profile IDs return `404`.
+- Missing job IDs return `404`.
+
 Commit message suggestion:
 
 ```text
 Add rule-based CV tailoring suggestions
 ```
 
-### Phase 8: Interview Prep Generator
+### Phase 8: Interview Prep Generator - Complete
 
 Goal: Generate interview preparation materials for a selected job.
 
@@ -784,6 +799,15 @@ Learning focus:
 Expected result:
 
 - The app helps identify what to study before an interview.
+
+Implemented behavior:
+
+- `POST /analysis/interview-prep` accepts a `profile_id` and `job_id`.
+- The endpoint loads the stored profile and job from the database.
+- The interview prep service reuses rule-based job analysis and match scoring outputs.
+- The response includes likely technical questions by required skill, HR questions, study topics, weak areas, and a 3-day preparation plan.
+- Missing profile IDs return `404`.
+- Missing job IDs return `404`.
 
 Commit message suggestion:
 

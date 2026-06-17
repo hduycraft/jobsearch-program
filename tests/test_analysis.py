@@ -183,9 +183,273 @@ def test_match_profile_to_job_returns_404_for_missing_job(client: TestClient) ->
     assert response.json()["detail"] == "Job not found"
 
 
+def test_cv_suggestions_tailor_profile_to_job_without_inventing_experience(
+    client: TestClient,
+) -> None:
+    profile_response = client.post(
+        "/profiles",
+        json={
+            "target_roles": ["Backend Developer"],
+            "skills": ["Python", "FastAPI", "PostgreSQL", "Docker"],
+            "experience_summary": (
+                "Built backend APIs and database-backed tools for job-search workflows."
+            ),
+            "projects": [
+                {
+                    "name": "CareerMatch Assistant",
+                    "description": "FastAPI job search API using PostgreSQL.",
+                    "skills": ["FastAPI", "PostgreSQL"],
+                },
+                {
+                    "name": "Portfolio Site",
+                    "description": "Frontend site for project writeups.",
+                    "skills": ["React"],
+                },
+            ],
+        },
+    )
+    job_response = client.post(
+        "/jobs",
+        json={
+            "title": "Backend Developer",
+            "company": "Example Co",
+            "description": (
+                "Backend Developer role requiring Python, FastAPI, PostgreSQL, "
+                "Docker, Azure DevOps, and REST API experience."
+            ),
+            "requirements": ["Python", "FastAPI", "PostgreSQL", "Docker"],
+            "seniority": "mid-level",
+        },
+    )
+
+    response = client.post(
+        "/analysis/cv-suggestions",
+        json={
+            "profile_id": profile_response.json()["id"],
+            "job_id": job_response.json()["id"],
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["tailored_summary_suggestion"] == (
+        "Position your CV summary for the Backend Developer at Example Co role by "
+        "emphasizing your experience with Python, FastAPI, PostgreSQL, and Docker, "
+        "using CareerMatch Assistant (matches FastAPI and PostgreSQL) as evidence, "
+        "and the problems you can solve for this employer."
+    )
+    assert data["projects_to_highlight"] == [
+        "CareerMatch Assistant (matches FastAPI and PostgreSQL)"
+    ]
+    assert data["bullet_point_suggestions"] == [
+        (
+            "Add a CV bullet that connects Python, FastAPI, PostgreSQL, and Docker "
+            "to a concrete result, such as a faster workflow, cleaner API, better "
+            "reliability, or clearer reporting."
+        ),
+        (
+            "Add or sharpen a project bullet for CareerMatch Assistant (matches "
+            "FastAPI and PostgreSQL): explain the problem, your contribution, the "
+            "tools used, and the outcome."
+        ),
+        (
+            "Rewrite one experience bullet from your summary so it mirrors the "
+            "Backend Developer responsibilities, while keeping the claim factual."
+        ),
+    ]
+    assert data["missing_keyword_warnings"] == [
+        (
+            "The job mentions Azure, but this skill is not listed in the profile. "
+            "Only add it to the CV if you have real experience with it."
+        ),
+        (
+            "The job mentions Azure DevOps, but this skill is not listed in the profile. "
+            "Only add it to the CV if you have real experience with it."
+        ),
+        (
+            "The job mentions REST API, but this skill is not listed in the profile. "
+            "Only add it to the CV if you have real experience with it."
+        ),
+    ]
+    assert data["ethical_warning"] == (
+        "Only include skills, projects, and experience you can honestly explain. "
+        "Do not invent experience to match a job description."
+    )
+
+
+def test_cv_suggestions_return_404_for_missing_profile(client: TestClient) -> None:
+    job_response = client.post(
+        "/jobs",
+        json={"title": "Backend Developer", "company": "Example Co"},
+    )
+
+    response = client.post(
+        "/analysis/cv-suggestions",
+        json={"profile_id": 999, "job_id": job_response.json()["id"]},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Profile not found"
+
+
+def test_cv_suggestions_return_404_for_missing_job(client: TestClient) -> None:
+    profile_response = client.post(
+        "/profiles",
+        json={"target_roles": ["Backend Developer"], "skills": ["Python"]},
+    )
+
+    response = client.post(
+        "/analysis/cv-suggestions",
+        json={"profile_id": profile_response.json()["id"], "job_id": 999},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Job not found"
+
+
+def test_interview_prep_generates_questions_and_three_day_plan(
+    client: TestClient,
+) -> None:
+    profile_response = client.post(
+        "/profiles",
+        json={
+            "target_roles": ["Backend Developer"],
+            "skills": ["Python", "FastAPI"],
+            "projects": [
+                {
+                    "name": "CareerMatch Assistant",
+                    "description": "FastAPI backend for job matching.",
+                    "skills": ["Python", "FastAPI"],
+                },
+            ],
+        },
+    )
+    job_response = client.post(
+        "/jobs",
+        json={
+            "title": "Backend Developer",
+            "company": "Example Co",
+            "description": (
+                "Backend Developer role. Need Python, FastAPI, Docker, and "
+                "REST API experience."
+            ),
+            "requirements": ["Python", "FastAPI", "Docker"],
+            "seniority": "mid-level",
+        },
+    )
+
+    response = client.post(
+        "/analysis/interview-prep",
+        json={
+            "profile_id": profile_response.json()["id"],
+            "job_id": job_response.json()["id"],
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["technical_questions"][:2] == [
+        {
+            "skill": "Python",
+            "questions": [
+                "How do you structure a Python service so it is easy to test and maintain?",
+                "How would you debug a slow Python API endpoint?",
+            ],
+        },
+        {
+            "skill": "FastAPI",
+            "questions": [
+                "How do FastAPI dependencies help organize request handling?",
+                "How would you validate request and response data in a FastAPI endpoint?",
+            ],
+        },
+    ]
+    assert {
+        "skill": "Docker",
+        "questions": [
+            "How would you explain the difference between an image and a container?",
+            "How would you debug a service that works locally but fails in Docker?",
+        ],
+    } in data["technical_questions"]
+    assert data["hr_questions"][0] == (
+        "Why are you interested in the Backend Developer role at Example Co?"
+    )
+    assert data["weak_areas"] == [
+        "Docker is mentioned in the job but not listed in the profile.",
+        "REST API is mentioned in the job but not listed in the profile.",
+    ]
+    assert data["study_topics"][:4] == [
+        "Review the basics of Docker and prepare an honest gap explanation.",
+        "Review the basics of REST API and prepare an honest gap explanation.",
+        "Prepare a project example that demonstrates Python.",
+        "Prepare a project example that demonstrates FastAPI.",
+    ]
+    assert data["three_day_plan"] == [
+        {
+            "day": 1,
+            "focus": "Map the role to your real experience",
+            "tasks": [
+                "Reread the Backend Developer description and mark the top responsibilities.",
+                "Prepare a 2-minute walkthrough of your most relevant project.",
+                "Prepare examples for matched skills: Python and FastAPI.",
+            ],
+        },
+        {
+            "day": 2,
+            "focus": "Practice technical and behavioral answers",
+            "tasks": [
+                "Practice technical questions for the required skills.",
+                "Write short STAR-format notes for two project or teamwork stories.",
+                "Study weak areas honestly: Docker and REST API.",
+            ],
+        },
+        {
+            "day": 3,
+            "focus": "Mock interview and final polish",
+            "tasks": [
+                "Run a mock interview and answer questions out loud.",
+                "Prepare thoughtful questions about Example Co, the team, and success metrics.",
+                "Review the requirement summary and connect it to your examples.",
+            ],
+        },
+    ]
+
+
+def test_interview_prep_returns_404_for_missing_profile(client: TestClient) -> None:
+    job_response = client.post(
+        "/jobs",
+        json={"title": "Backend Developer", "company": "Example Co"},
+    )
+
+    response = client.post(
+        "/analysis/interview-prep",
+        json={"profile_id": 999, "job_id": job_response.json()["id"]},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Profile not found"
+
+
+def test_interview_prep_returns_404_for_missing_job(client: TestClient) -> None:
+    profile_response = client.post(
+        "/profiles",
+        json={"target_roles": ["Backend Developer"], "skills": ["Python"]},
+    )
+
+    response = client.post(
+        "/analysis/interview-prep",
+        json={"profile_id": profile_response.json()["id"], "job_id": 999},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Job not found"
+
+
 def test_openapi_schema_includes_analysis_endpoint(client: TestClient) -> None:
     response = client.get("/openapi.json")
 
     assert response.status_code == 200
     assert "/analysis/job" in response.json()["paths"]
     assert "/analysis/match" in response.json()["paths"]
+    assert "/analysis/cv-suggestions" in response.json()["paths"]
+    assert "/analysis/interview-prep" in response.json()["paths"]

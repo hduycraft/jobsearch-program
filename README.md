@@ -16,7 +16,7 @@ It helps a candidate keep job opportunities organized, compare their profile aga
 
 ## Current Status
 
-Phase 6 is complete.
+Phase 8 is complete.
 
 The app currently includes:
 
@@ -27,6 +27,8 @@ The app currently includes:
 - Profile management endpoints under `/profiles`
 - Job description analysis endpoint under `/analysis/job`
 - Match scoring endpoint under `/analysis/match`
+- CV tailoring suggestion endpoint under `/analysis/cv-suggestions`
+- Interview prep endpoint under `/analysis/interview-prep`
 - SQLAlchemy ORM model for jobs.
 - SQLAlchemy ORM model for applications with a one-to-one job relationship.
 - SQLAlchemy ORM model for candidate profiles.
@@ -34,7 +36,7 @@ The app currently includes:
 - PostgreSQL configuration via `DATABASE_URL`.
 - Docker Compose service for local PostgreSQL.
 - Swagger/OpenAPI availability tests.
-- Job, application, profile, analysis, and match scoring endpoint tests.
+- Job, application, profile, analysis, match scoring, CV suggestion, and interview prep endpoint tests.
 - A detailed build plan in [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md).
 
 ## Current Data Relationships
