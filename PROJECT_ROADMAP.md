@@ -6,7 +6,7 @@ The project is built in small working phases. Future sessions should read this r
 
 ## Current Status
 
-- Phase 4 is complete.
+- Phase 6 is complete.
 - The app has a minimal FastAPI backend and database-backed job tracker.
 - `GET /health` returns `{"status": "ok"}`.
 - Swagger UI and OpenAPI schema are covered by tests.
@@ -16,11 +16,15 @@ The project is built in small working phases. Future sessions should read this r
 - Application tracking uses a database-backed one-to-one relationship with jobs.
 - Profile management endpoints are covered by tests.
 - Profiles store target roles, skills, experience summaries, and structured projects.
+- Job description analysis endpoint is covered by tests.
+- Job descriptions can be analyzed for known skills, seniority, and requirement summaries.
+- Match scoring endpoint is covered by tests.
+- Profiles can be compared against jobs with explainable strengths, gaps, and recommendations.
 - Alembic is configured with an initial `jobs` table migration.
 - Alembic includes an `applications` table migration.
 - Alembic includes a `profiles` table migration.
 - Docker Compose can start a local PostgreSQL database.
-- Next phase: Phase 5, Job Description Analyzer.
+- Next phase: Phase 7, CV Tailoring Suggestions.
 
 ## Ethical Scope
 
@@ -106,6 +110,7 @@ careermatch-assistant/
 |   |-- main.py
 |   |-- api/
 |   |   |-- __init__.py
+|   |   |-- routes_analysis.py
 |   |   |-- routes_applications.py
 |   |   |-- routes_jobs.py
 |   |   `-- routes_profiles.py
@@ -118,11 +123,16 @@ careermatch-assistant/
 |   |   |-- application.py
 |   |   |-- job.py
 |   |   `-- profile.py
-|   `-- schemas/
+|   |-- schemas/
 |       |-- __init__.py
+|       |-- analysis.py
 |       |-- application.py
 |       |-- job.py
 |       `-- profile.py
+|   `-- services/
+|       |-- __init__.py
+|       |-- job_analyzer.py
+|       `-- matcher.py
 |-- alembic/
 |   |-- env.py
 |   |-- script.py.mako
@@ -132,6 +142,7 @@ careermatch-assistant/
 |       `-- 0003_create_profiles_table.py
 |-- tests/
 |   |-- conftest.py
+|   |-- test_analysis.py
 |   |-- test_applications.py
 |   |-- test_jobs.py
 |   |-- test_profiles.py
@@ -570,16 +581,19 @@ Commit message suggestion:
 Add profile management endpoints
 ```
 
-### Phase 5: Job Description Analyzer
+### Phase 5: Job Description Analyzer - Complete
 
 Goal: Analyze a job description using simple rule-based NLP.
 
-Build:
+Built:
 
 - `job_analyzer.py`
 - Skill extraction
 - Seniority detection
 - Common requirement detection
+- Analysis schemas
+- Analysis API router
+- Endpoint tests
 
 Initial skill list:
 
@@ -624,17 +638,25 @@ Expected result:
 
 - Given a job description, the system extracts useful skills and requirements.
 
+Implemented behavior:
+
+- `POST /analysis/job` accepts raw job description text.
+- The analyzer extracts known skills from the initial roadmap skill list.
+- The analyzer estimates seniority from explicit seniority words or years of experience.
+- The analyzer returns a short list of requirement-like sentences or bullet lines.
+- The endpoint is included in the OpenAPI schema.
+
 Commit message suggestion:
 
 ```text
 Add rule-based job description analyzer
 ```
 
-### Phase 6: Match Scoring
+### Phase 6: Match Scoring - Complete
 
 Goal: Compare a profile against a job description and return a match score.
 
-Build:
+Built:
 
 - `matcher.py`
 - Compare profile skills with extracted job skills
@@ -674,6 +696,16 @@ Learning focus:
 Expected result:
 
 - The app can say whether a job is suitable and why.
+
+Implemented behavior:
+
+- `POST /analysis/match` accepts a `profile_id` and `job_id`.
+- The matcher loads the stored profile and job from the database.
+- Job skills are extracted with the existing rule-based job analyzer.
+- Scoring uses the Phase 6 weighting: skill match 60%, target role match 20%, and project relevance 20%.
+- The response includes score breakdown, matched skills, missing skills, strengths, gaps, and a recommendation.
+- Missing profile IDs return `404`.
+- Missing job IDs return `404`.
 
 Commit message suggestion:
 

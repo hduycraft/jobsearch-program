@@ -34,7 +34,7 @@ It is also designed as a learning project for backend development, API design, d
 
 ## Current Status
 
-Phase 4 is complete.
+Phase 6 is complete.
 
 The current app includes:
 
@@ -43,13 +43,15 @@ The current app includes:
 - Database-backed job CRUD endpoints.
 - Application tracking endpoints with statuses, notes, next actions, deadlines, and applied dates.
 - Profile management endpoints for target roles, skills, experience summary, and projects.
+- Job description analysis endpoint for skills, seniority, and requirement summaries.
+- Match scoring endpoint for explainable profile-to-job fit.
 - SQLAlchemy job model.
 - SQLAlchemy application model linked one-to-one with jobs.
 - SQLAlchemy profile model.
 - Alembic migrations for the jobs, applications, and profiles tables.
 - Docker Compose PostgreSQL service.
 - Swagger/OpenAPI availability tests.
-- Job, application, and profile endpoint tests.
+- Job, application, profile, analysis, and match scoring endpoint tests.
 - A detailed phase roadmap in `PROJECT_ROADMAP.md`.
 
 Run the API:

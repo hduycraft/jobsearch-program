@@ -16,7 +16,7 @@ It helps a candidate keep job opportunities organized, compare their profile aga
 
 ## Current Status
 
-Phase 4 is complete.
+Phase 6 is complete.
 
 The app currently includes:
 
@@ -25,6 +25,8 @@ The app currently includes:
 - Database-backed job CRUD endpoints under `/jobs`
 - Application tracking endpoints under `/applications`
 - Profile management endpoints under `/profiles`
+- Job description analysis endpoint under `/analysis/job`
+- Match scoring endpoint under `/analysis/match`
 - SQLAlchemy ORM model for jobs.
 - SQLAlchemy ORM model for applications with a one-to-one job relationship.
 - SQLAlchemy ORM model for candidate profiles.
@@ -32,8 +34,50 @@ The app currently includes:
 - PostgreSQL configuration via `DATABASE_URL`.
 - Docker Compose service for local PostgreSQL.
 - Swagger/OpenAPI availability tests.
-- Job, application, and profile endpoint tests.
+- Job, application, profile, analysis, and match scoring endpoint tests.
 - A detailed build plan in [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md).
+
+## Current Data Relationships
+
+```text
+profiles
+|-- id
+|-- target_roles
+|-- skills
+|-- experience_summary
+`-- projects
+
+jobs
+|-- id
+|-- title
+|-- company
+|-- description
+|-- requirements
+|-- seniority
+`-- application 1:1
+    |
+    v
+applications
+|-- id
+|-- job_id -> jobs.id
+|-- status
+|-- notes
+|-- next_action
+`-- deadline
+```
+
+Match scoring does not create a database row yet. `POST /analysis/match` loads one
+profile and one job, then calculates the match in the service layer:
+
+```text
+profiles.id  +  jobs.id
+     |             |
+     v             v
+       /analysis/match
+              |
+              v
+     score, strengths, gaps, recommendation
+```
 
 ## Tech Stack
 

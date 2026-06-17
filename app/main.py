@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.api.routes_analysis import router as analysis_router
 from app.api.routes_applications import router as applications_router
 from app.api.routes_jobs import router as jobs_router
 from app.api.routes_profiles import router as profiles_router
@@ -10,6 +11,7 @@ app = FastAPI(
     version="0.1.0",
 )
 
+app.include_router(analysis_router)
 app.include_router(applications_router)
 app.include_router(jobs_router)
 app.include_router(profiles_router)
