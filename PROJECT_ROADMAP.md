@@ -6,7 +6,7 @@ The project is built in small working phases. Future sessions should read this r
 
 ## Current Status
 
-- Phase 8 is complete.
+- Phase 9 is complete.
 - The app has a minimal FastAPI backend and database-backed job tracker.
 - `GET /health` returns `{"status": "ok"}`.
 - Swagger UI and OpenAPI schema are covered by tests.
@@ -24,11 +24,15 @@ The project is built in small working phases. Future sessions should read this r
 - CV suggestions produce grounded summaries, project highlights, bullet ideas, missing keyword warnings, and an ethical warning.
 - Interview prep endpoint is covered by tests.
 - Interview prep generates technical questions, HR questions, study topics, weak areas, and a 3-day preparation plan.
+- Optional LLM provider interface is covered by tests.
+- LLM provider selection supports `none`, deterministic `fake`, and local `ollama` providers.
+- Ollama support lives in `app/services/llm_provider.py`; no separate `app/cores/llama.py` file is required.
+- CV suggestions and interview prep can use an optional LLM provider while falling back to rule-based output.
 - Alembic is configured with an initial `jobs` table migration.
 - Alembic includes an `applications` table migration.
 - Alembic includes a `profiles` table migration.
 - Docker Compose can start a local PostgreSQL database.
-- Next phase: Phase 9, Add LLM Provider Interface.
+- Next phase: Phase 10, Generated Asset Storage.
 
 ## Ethical Scope
 
@@ -88,8 +92,8 @@ Backend:
 AI/NLP:
 
 - Start with rule-based keyword extraction and simple scoring.
-- Later add an LLM provider interface.
-- Optional providers later: OpenAI, Gemini, Ollama.
+- LLM provider interface supports `none`, `fake`, and local `ollama`.
+- Ollama uses the local HTTP API through `app/services/llm_provider.py`.
 - Optional vector search later: Qdrant or pgvector.
 
 Dev tools:
@@ -138,6 +142,7 @@ careermatch-assistant/
 |       |-- cv_tailor.py
 |       |-- interview_prep.py
 |       |-- job_analyzer.py
+|       |-- llm_provider.py
 |       `-- matcher.py
 |-- alembic/
 |   |-- env.py
@@ -151,6 +156,7 @@ careermatch-assistant/
 |   |-- test_analysis.py
 |   |-- test_applications.py
 |   |-- test_jobs.py
+|   |-- test_llm_provider.py
 |   |-- test_profiles.py
 |   `-- test_swagger.py
 |-- .env.example
@@ -815,7 +821,7 @@ Commit message suggestion:
 Add interview preparation generator
 ```
 
-### Phase 9: Add LLM Provider Interface
+### Phase 9: Add LLM Provider Interface - Complete
 
 Goal: Add optional LLM support without making the app dependent on one provider.
 
@@ -848,6 +854,18 @@ Learning focus:
 Expected result:
 
 - The system can use AI generation if configured, but still works with rule-based logic.
+
+Implemented behavior:
+
+- `LLM_PROVIDER=none` keeps the app fully rule-based.
+- `LLM_PROVIDER=fake` selects a deterministic fake provider for tests and demos.
+- `LLM_PROVIDER=ollama` uses a free local Ollama text-generation model through the local Ollama HTTP API.
+- `LLM_MODEL`, `OLLAMA_BASE_URL`, and `LLM_TIMEOUT_SECONDS` configure the local Ollama provider.
+- `EMBEDDING_MODEL` is available for later vector search or RAG work.
+- The current setup does not use `app/cores/llama.py` or LlamaIndex; those would only be needed later for dedicated embedding/RAG setup.
+- CV suggestions and interview prep receive an optional provider through FastAPI dependency injection.
+- Provider failures, missing provider output, or unknown provider names fall back to rule-based output.
+- The provider interface includes future hooks for CV suggestions, interview prep, cover letter drafts, and job summaries.
 
 Commit message suggestion:
 

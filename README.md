@@ -16,7 +16,7 @@ It helps a candidate keep job opportunities organized, compare their profile aga
 
 ## Current Status
 
-Phase 8 is complete.
+Phase 9 is complete.
 
 The app currently includes:
 
@@ -29,6 +29,7 @@ The app currently includes:
 - Match scoring endpoint under `/analysis/match`
 - CV tailoring suggestion endpoint under `/analysis/cv-suggestions`
 - Interview prep endpoint under `/analysis/interview-prep`
+- Optional LLM provider interface with `none`, `fake`, and local `ollama` providers.
 - SQLAlchemy ORM model for jobs.
 - SQLAlchemy ORM model for applications with a one-to-one job relationship.
 - SQLAlchemy ORM model for candidate profiles.
@@ -90,7 +91,38 @@ profiles.id  +  jobs.id
 - Alembic
 - PostgreSQL
 - pytest
-- Rule-based NLP first, optional LLM support later
+- Rule-based NLP first, optional local LLM support through Ollama
+- Optional deterministic fake LLM provider for tests and demos
+
+## LLM and Ollama Setup
+
+Phase 9 uses a provider pattern. The current LLM integration lives in
+`app/services/llm_provider.py`, not in `app/cores/llama.py`.
+
+```text
+/analysis/cv-suggestions or /analysis/interview-prep
+        |
+        v
+app/api/routes_analysis.py
+        |
+        v
+rule-based CV or interview service
+        |
+        v
+optional LLM provider
+        |
+        +-- LLM_PROVIDER=none   -> keep rule-based output
+        +-- LLM_PROVIDER=fake   -> deterministic test/demo output
+        `-- LLM_PROVIDER=ollama -> local Ollama text generation
+```
+
+The Ollama provider calls the local Ollama HTTP API at `/api/generate`. It is
+used to improve CV suggestions and interview prep after the rule-based output
+has already been built. If Ollama is unavailable, the app falls back to the
+rule-based output.
+
+`EMBEDDING_MODEL` is present for later vector search or RAG work. The project
+does not currently need a separate LlamaIndex setup file.
 
 ## Run Locally
 
@@ -118,6 +150,26 @@ Apply database migrations:
 ```powershell
 .\.venv\Scripts\alembic.exe upgrade head
 ```
+
+Optional LLM provider setting:
+
+```powershell
+$env:LLM_PROVIDER="none"
+```
+
+Use `fake` only for deterministic local demos or tests. To use a free local
+Ollama model, install Ollama, pull a text-generation model, then set:
+
+```powershell
+ollama pull llama3.2:3b
+$env:LLM_PROVIDER="ollama"
+$env:LLM_MODEL="llama3.2:3b"
+$env:OLLAMA_BASE_URL="http://localhost:11434"
+```
+
+The app still works without an LLM API key. `EMBEDDING_MODEL` is also available
+for later vector search or RAG work, but the current CV and interview endpoints
+use text generation through the LLM provider.
 
 Run tests:
 

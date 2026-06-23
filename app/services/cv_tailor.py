@@ -4,6 +4,7 @@ from typing import Any
 from app.models.job import Job
 from app.models.profile import Profile
 from app.services.job_analyzer import analyze_job_description
+from app.services.llm_provider import LLMProvider
 from app.services.matcher import match_profile_to_job
 
 ETHICAL_WARNING = (
@@ -12,7 +13,11 @@ ETHICAL_WARNING = (
 )
 
 
-def build_cv_suggestions(profile: Profile, job: Job) -> dict[str, object]:
+def build_cv_suggestions(
+    profile: Profile,
+    job: Job,
+    llm_provider: LLMProvider | None = None,
+) -> dict[str, object]:
     job_text = _job_text(job)
     job_analysis = analyze_job_description(job_text)
     job_skills = list(job_analysis["extracted_skills"])
@@ -21,7 +26,7 @@ def build_cv_suggestions(profile: Profile, job: Job) -> dict[str, object]:
     missing_skills = list(match_result["missing_skills"])
     projects_to_highlight = _projects_to_highlight(profile.projects, job_skills)
 
-    return {
+    rule_based_suggestions = {
         "tailored_summary_suggestion": _summary_suggestion(
             profile=profile,
             job=job,
@@ -38,6 +43,31 @@ def build_cv_suggestions(profile: Profile, job: Job) -> dict[str, object]:
         "missing_keyword_warnings": _missing_keyword_warnings(missing_skills),
         "ethical_warning": ETHICAL_WARNING,
     }
+    return _with_llm_cv_enhancement(profile, job, rule_based_suggestions, llm_provider)
+
+
+def _with_llm_cv_enhancement(
+    profile: Profile,
+    job: Job,
+    rule_based_suggestions: dict[str, object],
+    llm_provider: LLMProvider | None,
+) -> dict[str, object]:
+    if llm_provider is None:
+        return rule_based_suggestions
+
+    try:
+        enhanced = llm_provider.enhance_cv_suggestions(
+            profile=profile,
+            job=job,
+            rule_based_suggestions=rule_based_suggestions,
+        )
+    except Exception:
+        return rule_based_suggestions
+
+    if not enhanced or not rule_based_suggestions.keys() <= enhanced.keys():
+        return rule_based_suggestions
+
+    return enhanced
 
 
 def _job_text(job: Job) -> str:

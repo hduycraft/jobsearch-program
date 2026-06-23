@@ -17,6 +17,7 @@ from app.schemas.analysis import (
 from app.services.cv_tailor import build_cv_suggestions
 from app.services.interview_prep import build_interview_prep
 from app.services.job_analyzer import analyze_job_description
+from app.services.llm_provider import LLMProvider, get_llm_provider
 from app.services.matcher import match_profile_to_job
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
@@ -50,6 +51,7 @@ def match_job(request: MatchRequest, db: Session = Depends(get_db)) -> dict[str,
 def suggest_cv_updates(
     request: CvSuggestionsRequest,
     db: Session = Depends(get_db),
+    llm_provider: LLMProvider = Depends(get_llm_provider),
 ) -> dict[str, object]:
     profile = db.get(ProfileModel, request.profile_id)
     if profile is None:
@@ -65,13 +67,14 @@ def suggest_cv_updates(
             detail="Job not found",
         )
 
-    return build_cv_suggestions(profile, job)
+    return build_cv_suggestions(profile, job, llm_provider=llm_provider)
 
 
 @router.post("/interview-prep", response_model=InterviewPrepResponse)
 def prepare_for_interview(
     request: InterviewPrepRequest,
     db: Session = Depends(get_db),
+    llm_provider: LLMProvider = Depends(get_llm_provider),
 ) -> dict[str, object]:
     profile = db.get(ProfileModel, request.profile_id)
     if profile is None:
@@ -87,4 +90,4 @@ def prepare_for_interview(
             detail="Job not found",
         )
 
-    return build_interview_prep(profile, job)
+    return build_interview_prep(profile, job, llm_provider=llm_provider)

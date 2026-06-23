@@ -1,6 +1,7 @@
 from app.models.job import Job
 from app.models.profile import Profile
 from app.services.job_analyzer import analyze_job_description
+from app.services.llm_provider import LLMProvider
 from app.services.matcher import match_profile_to_job
 
 SKILL_QUESTIONS: dict[str, list[str]] = {
@@ -72,7 +73,11 @@ DEFAULT_TECHNICAL_QUESTIONS = [
 ]
 
 
-def build_interview_prep(profile: Profile, job: Job) -> dict[str, object]:
+def build_interview_prep(
+    profile: Profile,
+    job: Job,
+    llm_provider: LLMProvider | None = None,
+) -> dict[str, object]:
     job_text = _job_text(job)
     job_analysis = analyze_job_description(job_text)
     job_skills = list(job_analysis["extracted_skills"])
@@ -82,7 +87,7 @@ def build_interview_prep(profile: Profile, job: Job) -> dict[str, object]:
     missing_skills = list(match_result["missing_skills"])
     weak_areas = _weak_areas(missing_skills)
 
-    return {
+    rule_based_prep = {
         "technical_questions": _technical_questions(job_skills),
         "hr_questions": _hr_questions(job),
         "study_topics": _study_topics(
@@ -98,6 +103,31 @@ def build_interview_prep(profile: Profile, job: Job) -> dict[str, object]:
             requirements=requirements,
         ),
     }
+    return _with_llm_interview_enhancement(profile, job, rule_based_prep, llm_provider)
+
+
+def _with_llm_interview_enhancement(
+    profile: Profile,
+    job: Job,
+    rule_based_prep: dict[str, object],
+    llm_provider: LLMProvider | None,
+) -> dict[str, object]:
+    if llm_provider is None:
+        return rule_based_prep
+
+    try:
+        enhanced = llm_provider.enhance_interview_prep(
+            profile=profile,
+            job=job,
+            rule_based_prep=rule_based_prep,
+        )
+    except Exception:
+        return rule_based_prep
+
+    if not enhanced or not rule_based_prep.keys() <= enhanced.keys():
+        return rule_based_prep
+
+    return enhanced
 
 
 def _job_text(job: Job) -> str:

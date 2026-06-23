@@ -1,5 +1,26 @@
 from fastapi.testclient import TestClient
 
+from app.main import app
+from app.services.llm_provider import FakeLLMProvider, get_llm_provider
+
+
+class BrokenLLMProvider:
+    def enhance_cv_suggestions(
+        self,
+        profile: object,
+        job: object,
+        rule_based_suggestions: dict[str, object],
+    ) -> dict[str, object] | None:
+        raise RuntimeError("Provider unavailable")
+
+    def enhance_interview_prep(
+        self,
+        profile: object,
+        job: object,
+        rule_based_prep: dict[str, object],
+    ) -> dict[str, object] | None:
+        raise RuntimeError("Provider unavailable")
+
 
 def test_analyze_job_description_extracts_skills_and_seniority(
     client: TestClient,
@@ -277,6 +298,81 @@ def test_cv_suggestions_tailor_profile_to_job_without_inventing_experience(
     )
 
 
+def test_cv_suggestions_can_use_fake_llm_provider(client: TestClient) -> None:
+    app.dependency_overrides[get_llm_provider] = FakeLLMProvider
+    profile_response = client.post(
+        "/profiles",
+        json={
+            "target_roles": ["Backend Developer"],
+            "skills": ["Python"],
+            "projects": [{"name": "API Project", "skills": ["Python"]}],
+        },
+    )
+    job_response = client.post(
+        "/jobs",
+        json={
+            "title": "Backend Developer",
+            "company": "Example Co",
+            "description": "Backend role requiring Python.",
+        },
+    )
+
+    response = client.post(
+        "/analysis/cv-suggestions",
+        json={
+            "profile_id": profile_response.json()["id"],
+            "job_id": job_response.json()["id"],
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["tailored_summary_suggestion"].startswith(
+        "Fake LLM enhanced summary for Backend Developer at Example Co:"
+    )
+    assert data["bullet_point_suggestions"][0] == (
+        "Fake LLM draft: turn one relevant project into a measurable, "
+        "truthful achievement bullet."
+    )
+    assert data["ethical_warning"] == (
+        "Only include skills, projects, and experience you can honestly explain. "
+        "Do not invent experience to match a job description."
+    )
+
+
+def test_cv_suggestions_fall_back_when_llm_provider_fails(
+    client: TestClient,
+) -> None:
+    app.dependency_overrides[get_llm_provider] = BrokenLLMProvider
+    profile_response = client.post(
+        "/profiles",
+        json={"target_roles": ["Backend Developer"], "skills": ["Python"]},
+    )
+    job_response = client.post(
+        "/jobs",
+        json={
+            "title": "Backend Developer",
+            "company": "Example Co",
+            "description": "Backend role requiring Python.",
+        },
+    )
+
+    response = client.post(
+        "/analysis/cv-suggestions",
+        json={
+            "profile_id": profile_response.json()["id"],
+            "job_id": job_response.json()["id"],
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["tailored_summary_suggestion"].startswith(
+        "Position your CV summary for the Backend Developer at Example Co role"
+    )
+    assert not data["tailored_summary_suggestion"].startswith("Fake LLM")
+
+
 def test_cv_suggestions_return_404_for_missing_profile(client: TestClient) -> None:
     job_response = client.post(
         "/jobs",
@@ -413,6 +509,43 @@ def test_interview_prep_generates_questions_and_three_day_plan(
             ],
         },
     ]
+
+
+def test_interview_prep_can_use_fake_llm_provider(client: TestClient) -> None:
+    app.dependency_overrides[get_llm_provider] = FakeLLMProvider
+    profile_response = client.post(
+        "/profiles",
+        json={"target_roles": ["Backend Developer"], "skills": ["Python"]},
+    )
+    job_response = client.post(
+        "/jobs",
+        json={
+            "title": "Backend Developer",
+            "company": "Example Co",
+            "description": "Backend role requiring Python.",
+        },
+    )
+
+    response = client.post(
+        "/analysis/interview-prep",
+        json={
+            "profile_id": profile_response.json()["id"],
+            "job_id": job_response.json()["id"],
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["technical_questions"][0] == {
+        "skill": "Role-specific practice",
+        "questions": [
+            (
+                "Fake LLM question: which project best proves you can do the "
+                "Backend Developer role?"
+            )
+        ],
+    }
+    assert data["technical_questions"][1]["skill"] == "Python"
 
 
 def test_interview_prep_returns_404_for_missing_profile(client: TestClient) -> None:
