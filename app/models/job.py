@@ -8,6 +8,7 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.models.application import Application
+    from app.models.generated_asset import GeneratedAsset
 
 
 class Job(Base):
@@ -39,6 +40,10 @@ class Job(Base):
         nullable=False,
     )
     application: Mapped["Application | None"] = relationship(
+        back_populates="job",
+        cascade="all, delete-orphan",
+    )
+    generated_assets: Mapped[list["GeneratedAsset"]] = relationship(
         back_populates="job",
         cascade="all, delete-orphan",
     )
