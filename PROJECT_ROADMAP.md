@@ -6,7 +6,7 @@ The project is built in small working phases. Future sessions should read this r
 
 ## Current Status
 
-- Phase 10 is complete.
+- Phase 11 is complete.
 - The app has a minimal FastAPI backend and database-backed job tracker.
 - `GET /health` returns `{"status": "ok"}`.
 - Swagger UI and OpenAPI schema are covered by tests.
@@ -30,12 +30,14 @@ The project is built in small working phases. Future sessions should read this r
 - CV suggestions and interview prep can use an optional LLM provider while falling back to rule-based output.
 - Generated asset storage endpoints are covered by tests.
 - Generated assets store CV suggestions, cover letters, and interview prep JSON output per job.
+- Manual bulk job import endpoint is covered by tests.
+- Job imports normalize manually collected job payloads, save accepted jobs, and skip duplicates.
 - Alembic is configured with an initial `jobs` table migration.
 - Alembic includes an `applications` table migration.
 - Alembic includes a `profiles` table migration.
 - Alembic includes a `generated_assets` table migration.
 - Docker Compose can start a local PostgreSQL database.
-- Next phase: Phase 11, Viet Nam Region Job Import.
+- Next phase: Phase 12, Optional Vector Search / RAG.
 
 ## Ethical Scope
 
@@ -50,7 +52,7 @@ Allowed:
 - Generate CV improvement suggestions.
 - Generate interview prep questions and study topics.
 - Track applications.
-- Later, import jobs from safe public sources, starting with jobs in the Viet Nam region.
+- Import manually collected jobs in bulk.
 
 Not allowed:
 
@@ -124,6 +126,7 @@ careermatch-assistant/
 |   |   |-- routes_analysis.py
 |   |   |-- routes_applications.py
 |   |   |-- routes_generated_assets.py
+|   |   |-- routes_imports.py
 |   |   |-- routes_jobs.py
 |   |   `-- routes_profiles.py
 |   |-- core/
@@ -141,6 +144,7 @@ careermatch-assistant/
 |       |-- analysis.py
 |       |-- application.py
 |       |-- generated_asset.py
+|       |-- imports.py
 |       |-- job.py
 |       `-- profile.py
 |   `-- services/
@@ -148,6 +152,7 @@ careermatch-assistant/
 |       |-- cv_tailor.py
 |       |-- interview_prep.py
 |       |-- job_analyzer.py
+|       |-- job_importer.py
 |       |-- llm_provider.py
 |       `-- matcher.py
 |-- alembic/
@@ -163,6 +168,7 @@ careermatch-assistant/
 |   |-- test_analysis.py
 |   |-- test_applications.py
 |   |-- test_generated_assets.py
+|   |-- test_imports.py
 |   |-- test_jobs.py
 |   |-- test_llm_provider.py
 |   |-- test_profiles.py
@@ -197,18 +203,21 @@ careermatch-assistant/
 |   |   |-- profile.py
 |   |   |-- application.py
 |   |   |-- generated_asset.py
+|   |   |-- imports.py
 |   |   `-- analysis.py
 |   |-- services/
 |   |   |-- cv_parser.py
 |   |   |-- job_analyzer.py
 |   |   |-- matcher.py
 |   |   |-- interview_prep.py
+|   |   |-- job_importer.py
 |   |   `-- llm_provider.py
 |   |-- api/
 |   |   |-- routes_jobs.py
 |   |   |-- routes_profiles.py
 |   |   |-- routes_applications.py
 |   |   |-- routes_generated_assets.py
+|   |   |-- routes_imports.py
 |   |   `-- routes_analysis.py
 |   `-- tests/
 |-- alembic/
@@ -917,39 +926,52 @@ Commit message suggestion:
 Add generated asset storage
 ```
 
-### Phase 11: Viet Nam Region Job Import
+### Phase 11: Manual Job Import - Complete
 
-Goal: Import jobs from safe public job sources, starting with jobs in the Viet Nam region.
+Goal: Import manually collected jobs in bulk without splitting by region.
 
 Start with:
 
-- Viet Nam-region job listings from public, allowed sources
-- Configured source allowlist before any fetch happens
-- Region filter set to Viet Nam first
+- Jobs the user has already collected manually
+- A simple source label such as `manual`, `spreadsheet`, or `manual-bulk-import`
+- No external fetching
 
-Possible sources to evaluate:
+Future sources to evaluate later:
 
-- Official public APIs or feeds from Viet Nam job platforms, if available
-- Public company ATS pages for companies hiring in Viet Nam
-- Greenhouse or Lever public job board APIs only when filtering to Viet Nam-region roles
+- Official public APIs or feeds, if their terms allow automated fetching
+- Greenhouse or Lever public job board APIs, only where automated API access is allowed
+- Company ATS APIs or feeds that explicitly permit this use
 
 Build:
 
 - `job_importer.py`
-- Source adapter interface for safe job imports
-- Import jobs from configured Viet Nam-region sources
+- Source adapter interface for manually provided jobs
+- Import jobs from request payloads
 - Normalize title, company, location, source, source URL, description, and requirements
 - Deduplicate by URL/title/company
 - Save imported jobs
+- Endpoint tests for successful imports, default source labels, duplicate skipping, and validation
 
 Endpoints:
 
-- `POST /imports/vietnam`
+- `POST /imports/jobs`
 - Later source-specific endpoints only if needed, such as `POST /imports/greenhouse` or `POST /imports/lever`
+
+Implemented behavior:
+
+- `POST /imports/jobs` accepts manually collected job payloads and saves accepted jobs into the existing `jobs` table.
+- The endpoint does not fetch jobs from public sources.
+- The endpoint does not split imports by region.
+- Incoming title, company, location, description, requirements, and seniority values are normalized before save.
+- Requirements are cleaned and deduplicated while preserving the original order.
+- Existing jobs are deduplicated by source URL when present, and by title/company.
+- Duplicate jobs are reported in `skipped_jobs` instead of being saved.
+- No scraping, login automation, protected page fetching, LinkedIn scraping, or Indeed scraping was added.
 
 Important:
 
-- Only use public APIs, public feeds, or sources whose terms allow automated fetching.
+- This phase is manual import only.
+- Future automated imports should use only public APIs, public feeds, or sources whose terms allow automated fetching.
 - Do not scrape protected pages or bypass anti-bot controls.
 - Do not scrape LinkedIn or Indeed.
 - Do not automate login.
@@ -957,20 +979,20 @@ Important:
 
 Learning focus:
 
-- External API integration
 - Data cleaning
 - Deduplication
-- Region filtering
-- Background ingestion design
+- Bulk import API design
+- Keeping import logic separate from route logic
 
 Expected result:
 
-- Viet Nam-region jobs can be imported into the tracker from configured safe sources.
+- Manually collected jobs can be imported into the tracker in bulk.
+- Live external APIs can be added later behind the same service boundary if the source allows automated fetching.
 
 Commit message suggestion:
 
 ```text
-Add Viet Nam region job imports
+Add manual job imports
 ```
 
 ### Phase 12: Optional Vector Search / RAG

@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from app.api.routes_analysis import router as analysis_router
 from app.api.routes_applications import router as applications_router
 from app.api.routes_generated_assets import router as generated_assets_router
+from app.api.routes_imports import router as imports_router
 from app.api.routes_jobs import router as jobs_router
 from app.api.routes_profiles import router as profiles_router
 
@@ -15,6 +16,7 @@ app = FastAPI(
 app.include_router(analysis_router)
 app.include_router(applications_router)
 app.include_router(generated_assets_router)
+app.include_router(imports_router)
 app.include_router(jobs_router)
 app.include_router(profiles_router)
 

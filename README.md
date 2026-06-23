@@ -13,11 +13,11 @@ It helps a candidate keep job opportunities organized, compare their profile aga
 - Suggests honest CV improvements based on real experience.
 - Generates interview preparation questions and study topics.
 - Stores generated outputs for later review.
-- Later, imports jobs from safe public sources, starting with Viet Nam-region roles.
+- Imports manually collected jobs in bulk.
 
 ## Current Status
 
-Phase 10 is complete.
+Phase 11 is complete.
 
 The app currently includes:
 
@@ -32,6 +32,7 @@ The app currently includes:
 - Interview prep endpoint under `/analysis/interview-prep`
 - Optional LLM provider interface with `none`, `fake`, and local `ollama` providers.
 - Generated asset storage endpoints under `/jobs/{job_id}/generated-assets`
+- Manual bulk job import endpoint under `/imports/jobs`
 - SQLAlchemy ORM model for jobs.
 - SQLAlchemy ORM model for applications with a one-to-one job relationship.
 - SQLAlchemy ORM model for candidate profiles.
@@ -40,7 +41,7 @@ The app currently includes:
 - PostgreSQL configuration via `DATABASE_URL`.
 - Docker Compose service for local PostgreSQL.
 - Swagger/OpenAPI availability tests.
-- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, and generated asset endpoint tests.
+- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, generated asset, and import endpoint tests.
 - A detailed build plan in [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md).
 
 ## Current Data Relationships
@@ -186,6 +187,10 @@ $env:OLLAMA_BASE_URL="http://localhost:11434"
 The app still works without an LLM API key. `EMBEDDING_MODEL` is also available
 for later vector search or RAG work, but the current CV and interview endpoints
 use text generation through the LLM provider.
+
+`POST /imports/jobs` imports manually collected job payloads, normalizes common
+fields, skips duplicates, and saves accepted jobs into the existing `/jobs`
+tracker. It does not fetch jobs from public sources yet.
 
 Run tests:
 

@@ -13,7 +13,7 @@ The goal is not to automate job applications. The app helps the user understand 
 - Suggests CV improvements based on real experience.
 - Generates interview preparation questions and study topics.
 - Stores generated CV, cover letter, and interview prep outputs for later review.
-- Later, imports jobs safely from public sources, starting with Viet Nam-region roles.
+- Imports manually collected jobs in bulk.
 
 ## Why This Project Exists
 
@@ -35,7 +35,7 @@ It is also designed as a learning project for backend development, API design, d
 
 ## Current Status
 
-Phase 10 is complete.
+Phase 11 is complete.
 
 The current app includes:
 
@@ -50,6 +50,7 @@ The current app includes:
 - Interview prep endpoint.
 - Optional LLM provider interface with `none`, `fake`, and local `ollama` providers.
 - Generated asset endpoints for saving and listing generated outputs per job.
+- Manual bulk job import endpoint.
 - SQLAlchemy job model.
 - SQLAlchemy application model linked one-to-one with jobs.
 - SQLAlchemy profile model.
@@ -57,7 +58,7 @@ The current app includes:
 - Alembic migrations for the jobs, applications, profiles, and generated assets tables.
 - Docker Compose PostgreSQL service.
 - Swagger/OpenAPI availability tests.
-- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, LLM provider, and generated asset endpoint tests.
+- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, LLM provider, generated asset, and import endpoint tests.
 - A detailed phase roadmap in `PROJECT_ROADMAP.md`.
 
 Run the API:
@@ -85,3 +86,11 @@ Expected response:
 This project does not include mass auto-apply automation, LinkedIn scraping, Indeed scraping, login automation, CAPTCHA bypassing, or anything that violates job board terms.
 
 The user reviews and submits all applications manually.
+
+## Manual Job Import
+
+`POST /imports/jobs` accepts manually collected job payloads, normalizes the
+incoming fields, skips duplicate jobs, and saves accepted records into the
+existing `jobs` table. The app does not fetch jobs from public sources yet.
+Future public-source imports should use allowed APIs or feeds only, without
+scraping protected pages or automating login.
