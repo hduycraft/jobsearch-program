@@ -12,11 +12,12 @@ It helps a candidate keep job opportunities organized, compare their profile aga
 - Scores how well a profile matches a job.
 - Suggests honest CV improvements based on real experience.
 - Generates interview preparation questions and study topics.
-- Later, imports jobs from safe public ATS APIs such as Greenhouse and Lever.
+- Stores generated outputs for later review.
+- Later, imports jobs from safe public sources, starting with Viet Nam-region roles.
 
 ## Current Status
 
-Phase 9 is complete.
+Phase 10 is complete.
 
 The app currently includes:
 
@@ -30,14 +31,16 @@ The app currently includes:
 - CV tailoring suggestion endpoint under `/analysis/cv-suggestions`
 - Interview prep endpoint under `/analysis/interview-prep`
 - Optional LLM provider interface with `none`, `fake`, and local `ollama` providers.
+- Generated asset storage endpoints under `/jobs/{job_id}/generated-assets`
 - SQLAlchemy ORM model for jobs.
 - SQLAlchemy ORM model for applications with a one-to-one job relationship.
 - SQLAlchemy ORM model for candidate profiles.
-- Alembic migrations for the `jobs`, `applications`, and `profiles` tables.
+- SQLAlchemy ORM model for generated assets linked to jobs.
+- Alembic migrations for the `jobs`, `applications`, `profiles`, and `generated_assets` tables.
 - PostgreSQL configuration via `DATABASE_URL`.
 - Docker Compose service for local PostgreSQL.
 - Swagger/OpenAPI availability tests.
-- Job, application, profile, analysis, match scoring, CV suggestion, and interview prep endpoint tests.
+- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, and generated asset endpoint tests.
 - A detailed build plan in [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md).
 
 ## Current Data Relationships
@@ -67,6 +70,19 @@ applications
 |-- notes
 |-- next_action
 `-- deadline
+
+jobs
+`-- generated_assets 1:many
+    |
+    v
+generated_assets
+|-- id
+|-- job_id -> jobs.id
+|-- asset_type
+|-- title
+|-- content
+|-- created_at
+`-- updated_at
 ```
 
 Match scoring does not create a database row yet. `POST /analysis/match` loads one

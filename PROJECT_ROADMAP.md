@@ -6,7 +6,7 @@ The project is built in small working phases. Future sessions should read this r
 
 ## Current Status
 
-- Phase 9 is complete.
+- Phase 10 is complete.
 - The app has a minimal FastAPI backend and database-backed job tracker.
 - `GET /health` returns `{"status": "ok"}`.
 - Swagger UI and OpenAPI schema are covered by tests.
@@ -28,11 +28,14 @@ The project is built in small working phases. Future sessions should read this r
 - LLM provider selection supports `none`, deterministic `fake`, and local `ollama` providers.
 - Ollama support lives in `app/services/llm_provider.py`; no separate `app/cores/llama.py` file is required.
 - CV suggestions and interview prep can use an optional LLM provider while falling back to rule-based output.
+- Generated asset storage endpoints are covered by tests.
+- Generated assets store CV suggestions, cover letters, and interview prep JSON output per job.
 - Alembic is configured with an initial `jobs` table migration.
 - Alembic includes an `applications` table migration.
 - Alembic includes a `profiles` table migration.
+- Alembic includes a `generated_assets` table migration.
 - Docker Compose can start a local PostgreSQL database.
-- Next phase: Phase 10, Generated Asset Storage.
+- Next phase: Phase 11, Viet Nam Region Job Import.
 
 ## Ethical Scope
 
@@ -47,7 +50,7 @@ Allowed:
 - Generate CV improvement suggestions.
 - Generate interview prep questions and study topics.
 - Track applications.
-- Later, import jobs from safe public sources such as Greenhouse and Lever public APIs.
+- Later, import jobs from safe public sources, starting with jobs in the Viet Nam region.
 
 Not allowed:
 
@@ -120,6 +123,7 @@ careermatch-assistant/
 |   |   |-- __init__.py
 |   |   |-- routes_analysis.py
 |   |   |-- routes_applications.py
+|   |   |-- routes_generated_assets.py
 |   |   |-- routes_jobs.py
 |   |   `-- routes_profiles.py
 |   |-- core/
@@ -129,12 +133,14 @@ careermatch-assistant/
 |   |-- models/
 |   |   |-- __init__.py
 |   |   |-- application.py
+|   |   |-- generated_asset.py
 |   |   |-- job.py
 |   |   `-- profile.py
 |   |-- schemas/
 |       |-- __init__.py
 |       |-- analysis.py
 |       |-- application.py
+|       |-- generated_asset.py
 |       |-- job.py
 |       `-- profile.py
 |   `-- services/
@@ -150,11 +156,13 @@ careermatch-assistant/
 |   `-- versions/
 |       |-- 0001_create_jobs_table.py
 |       |-- 0002_create_applications_table.py
-|       `-- 0003_create_profiles_table.py
+|       |-- 0003_create_profiles_table.py
+|       `-- 0004_create_generated_assets_table.py
 |-- tests/
 |   |-- conftest.py
 |   |-- test_analysis.py
 |   |-- test_applications.py
+|   |-- test_generated_assets.py
 |   |-- test_jobs.py
 |   |-- test_llm_provider.py
 |   |-- test_profiles.py
@@ -188,6 +196,7 @@ careermatch-assistant/
 |   |   |-- job.py
 |   |   |-- profile.py
 |   |   |-- application.py
+|   |   |-- generated_asset.py
 |   |   `-- analysis.py
 |   |-- services/
 |   |   |-- cv_parser.py
@@ -199,6 +208,7 @@ careermatch-assistant/
 |   |   |-- routes_jobs.py
 |   |   |-- routes_profiles.py
 |   |   |-- routes_applications.py
+|   |   |-- routes_generated_assets.py
 |   |   `-- routes_analysis.py
 |   `-- tests/
 |-- alembic/
@@ -265,17 +275,17 @@ GeneratedAsset:
 
 - `id`
 - `job_id`
-- `type`
+- `asset_type`
+- `title`
 - `content`
 - `created_at`
+- `updated_at`
 
 Generated asset types:
 
-- `cv_summary`
-- `cv_bullets`
+- `cv_suggestions`
 - `cover_letter`
 - `interview_prep`
-- `study_plan`
 
 ## Setup
 
@@ -873,15 +883,17 @@ Commit message suggestion:
 Add optional LLM provider interface
 ```
 
-### Phase 10: Generated Asset Storage
+### Phase 10: Generated Asset Storage - Complete
 
 Goal: Store generated outputs.
 
-Build:
+Built:
 
 - GeneratedAsset model
 - Routes to list generated outputs per job
 - Save CV suggestions, cover letters, and interview prep
+- Alembic migration for `generated_assets`
+- Endpoint tests for creating, listing, missing jobs, invalid asset types, and job delete cleanup
 
 Endpoints:
 
@@ -897,6 +909,7 @@ Learning focus:
 Expected result:
 
 - Previously generated interview prep or CV suggestions can be viewed for a job.
+- Generated assets are stored as JSON content linked to `jobs.id`.
 
 Commit message suggestion:
 
@@ -904,29 +917,40 @@ Commit message suggestion:
 Add generated asset storage
 ```
 
-### Phase 11: Safe Job Import From Public APIs
+### Phase 11: Viet Nam Region Job Import
 
-Goal: Import jobs from safe public job board APIs.
+Goal: Import jobs from safe public job sources, starting with jobs in the Viet Nam region.
 
 Start with:
 
-- Greenhouse public job board API
-- Lever postings API
+- Viet Nam-region job listings from public, allowed sources
+- Configured source allowlist before any fetch happens
+- Region filter set to Viet Nam first
+
+Possible sources to evaluate:
+
+- Official public APIs or feeds from Viet Nam job platforms, if available
+- Public company ATS pages for companies hiring in Viet Nam
+- Greenhouse or Lever public job board APIs only when filtering to Viet Nam-region roles
 
 Build:
 
 - `job_importer.py`
-- Import jobs from configured company boards
+- Source adapter interface for safe job imports
+- Import jobs from configured Viet Nam-region sources
+- Normalize title, company, location, source, source URL, description, and requirements
 - Deduplicate by URL/title/company
 - Save imported jobs
 
 Endpoints:
 
-- `POST /imports/greenhouse`
-- `POST /imports/lever`
+- `POST /imports/vietnam`
+- Later source-specific endpoints only if needed, such as `POST /imports/greenhouse` or `POST /imports/lever`
 
 Important:
 
+- Only use public APIs, public feeds, or sources whose terms allow automated fetching.
+- Do not scrape protected pages or bypass anti-bot controls.
 - Do not scrape LinkedIn or Indeed.
 - Do not automate login.
 - Do not auto-apply.
@@ -936,16 +960,17 @@ Learning focus:
 - External API integration
 - Data cleaning
 - Deduplication
+- Region filtering
 - Background ingestion design
 
 Expected result:
 
-- Jobs can be imported from selected companies into the tracker.
+- Viet Nam-region jobs can be imported into the tracker from configured safe sources.
 
 Commit message suggestion:
 
 ```text
-Add safe public ATS job imports
+Add Viet Nam region job imports
 ```
 
 ### Phase 12: Optional Vector Search / RAG

@@ -12,7 +12,8 @@ The goal is not to automate job applications. The app helps the user understand 
 - Compares the candidate profile against a job and explains strengths and gaps.
 - Suggests CV improvements based on real experience.
 - Generates interview preparation questions and study topics.
-- Later, imports jobs safely from public ATS APIs such as Greenhouse and Lever.
+- Stores generated CV, cover letter, and interview prep outputs for later review.
+- Later, imports jobs safely from public sources, starting with Viet Nam-region roles.
 
 ## Why This Project Exists
 
@@ -30,11 +31,11 @@ It is also designed as a learning project for backend development, API design, d
 - Alembic
 - pytest
 - Rule-based NLP first
-- Optional LLM support later
+- Optional local LLM support through Ollama
 
 ## Current Status
 
-Phase 6 is complete.
+Phase 10 is complete.
 
 The current app includes:
 
@@ -45,13 +46,18 @@ The current app includes:
 - Profile management endpoints for target roles, skills, experience summary, and projects.
 - Job description analysis endpoint for skills, seniority, and requirement summaries.
 - Match scoring endpoint for explainable profile-to-job fit.
+- CV tailoring suggestion endpoint.
+- Interview prep endpoint.
+- Optional LLM provider interface with `none`, `fake`, and local `ollama` providers.
+- Generated asset endpoints for saving and listing generated outputs per job.
 - SQLAlchemy job model.
 - SQLAlchemy application model linked one-to-one with jobs.
 - SQLAlchemy profile model.
-- Alembic migrations for the jobs, applications, and profiles tables.
+- SQLAlchemy generated asset model linked many-to-one with jobs.
+- Alembic migrations for the jobs, applications, profiles, and generated assets tables.
 - Docker Compose PostgreSQL service.
 - Swagger/OpenAPI availability tests.
-- Job, application, profile, analysis, and match scoring endpoint tests.
+- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, LLM provider, and generated asset endpoint tests.
 - A detailed phase roadmap in `PROJECT_ROADMAP.md`.
 
 Run the API:
