@@ -6,7 +6,7 @@ The project is built in small working phases. Future sessions should read this r
 
 ## Current Status
 
-- Phase 11 is complete.
+- Phase 12 is complete.
 - The app has a minimal FastAPI backend and database-backed job tracker.
 - `GET /health` returns `{"status": "ok"}`.
 - Swagger UI and OpenAPI schema are covered by tests.
@@ -32,12 +32,17 @@ The project is built in small working phases. Future sessions should read this r
 - Generated assets store CV suggestions, cover letters, and interview prep JSON output per job.
 - Manual bulk job import endpoint is covered by tests.
 - Job imports normalize manually collected job payloads, save accepted jobs, and skip duplicates.
+- Semantic search endpoints are covered by tests.
+- Job embeddings are stored in the database as deterministic local vectors.
+- Similar indexed jobs can be searched through `/semantic-search/jobs/search`.
+- Relevant profile summary/project context can be retrieved for a selected job.
 - Alembic is configured with an initial `jobs` table migration.
 - Alembic includes an `applications` table migration.
 - Alembic includes a `profiles` table migration.
 - Alembic includes a `generated_assets` table migration.
+- Alembic includes a `job_embeddings` table migration.
 - Docker Compose can start a local PostgreSQL database.
-- Next phase: Phase 12, Optional Vector Search / RAG.
+- Next phase: Phase 13, Frontend.
 
 ## Ethical Scope
 
@@ -128,7 +133,8 @@ careermatch-assistant/
 |   |   |-- routes_generated_assets.py
 |   |   |-- routes_imports.py
 |   |   |-- routes_jobs.py
-|   |   `-- routes_profiles.py
+|   |   |-- routes_profiles.py
+|   |   `-- routes_semantic_search.py
 |   |-- core/
 |   |   |-- __init__.py
 |   |   |-- config.py
@@ -138,6 +144,7 @@ careermatch-assistant/
 |   |   |-- application.py
 |   |   |-- generated_asset.py
 |   |   |-- job.py
+|   |   |-- job_embedding.py
 |   |   `-- profile.py
 |   |-- schemas/
 |       |-- __init__.py
@@ -146,7 +153,8 @@ careermatch-assistant/
 |       |-- generated_asset.py
 |       |-- imports.py
 |       |-- job.py
-|       `-- profile.py
+|       |-- profile.py
+|       `-- semantic_search.py
 |   `-- services/
 |       |-- __init__.py
 |       |-- cv_tailor.py
@@ -154,7 +162,8 @@ careermatch-assistant/
 |       |-- job_analyzer.py
 |       |-- job_importer.py
 |       |-- llm_provider.py
-|       `-- matcher.py
+|       |-- matcher.py
+|       `-- semantic_search.py
 |-- alembic/
 |   |-- env.py
 |   |-- script.py.mako
@@ -162,7 +171,8 @@ careermatch-assistant/
 |       |-- 0001_create_jobs_table.py
 |       |-- 0002_create_applications_table.py
 |       |-- 0003_create_profiles_table.py
-|       `-- 0004_create_generated_assets_table.py
+|       |-- 0004_create_generated_assets_table.py
+|       `-- 0005_create_job_embeddings_table.py
 |-- tests/
 |   |-- conftest.py
 |   |-- test_analysis.py
@@ -172,6 +182,7 @@ careermatch-assistant/
 |   |-- test_jobs.py
 |   |-- test_llm_provider.py
 |   |-- test_profiles.py
+|   |-- test_semantic_search.py
 |   `-- test_swagger.py
 |-- .env.example
 |-- alembic.ini
@@ -995,27 +1006,47 @@ Commit message suggestion:
 Add manual job imports
 ```
 
-### Phase 12: Optional Vector Search / RAG
+### Phase 12: Optional Vector Search / RAG - Complete
 
 Goal: Add semantic search over jobs, CV, and project data.
 
-Choose one:
+Chosen foundation:
 
-- Qdrant
-- pgvector
+- Database-backed local vector storage in `job_embeddings`.
+- Vectors are stored as JSON for SQLite test compatibility and to keep this phase runnable without PostgreSQL extensions.
+- The service boundary can be replaced later with pgvector or Qdrant.
 
-Build:
+Built:
 
-- Embedding service
-- Store job description embeddings
-- Search similar jobs
-- Retrieve relevant profile/project context for a selected job
+- `app/services/semantic_search.py`
+- Deterministic local embedding service
+- `JobEmbedding` model
+- Alembic migration for the `job_embeddings` table
+- Semantic search schemas
+- Semantic search API router
+- Endpoint tests
 
 Use cases:
 
 - Find jobs similar to one the user liked
 - Retrieve the most relevant project for a job
 - Generate grounded application suggestions
+
+Endpoints:
+
+- `POST /semantic-search/jobs/index`
+- `POST /semantic-search/jobs/search`
+- `POST /semantic-search/profile-context`
+
+Implemented behavior:
+
+- `POST /semantic-search/jobs/index` creates or refreshes stored vectors for all current jobs.
+- Job embedding rows are deduplicated by `job_id` and refreshed when job text changes.
+- `POST /semantic-search/jobs/search` compares a query vector against stored job vectors and returns the closest indexed jobs.
+- `POST /semantic-search/profile-context` compares a selected job against the profile experience summary and projects, then returns the most relevant context items.
+- Missing profile IDs return `404`.
+- Missing job IDs return `404`.
+- The first implementation is deterministic and local. It is a foundation for later real embeddings through pgvector or Qdrant, not a full external RAG stack yet.
 
 Learning focus:
 
@@ -1026,7 +1057,7 @@ Learning focus:
 
 Expected result:
 
-- The app can retrieve relevant experience and jobs semantically, not only by keywords.
+- The app can retrieve relevant experience and indexed jobs through vector similarity without requiring external services.
 
 Commit message suggestion:
 

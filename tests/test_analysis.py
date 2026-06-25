@@ -586,3 +586,6 @@ def test_openapi_schema_includes_analysis_endpoint(client: TestClient) -> None:
     assert "/analysis/match" in response.json()["paths"]
     assert "/analysis/cv-suggestions" in response.json()["paths"]
     assert "/analysis/interview-prep" in response.json()["paths"]
+    assert "/semantic-search/jobs/index" in response.json()["paths"]
+    assert "/semantic-search/jobs/search" in response.json()["paths"]
+    assert "/semantic-search/profile-context" in response.json()["paths"]

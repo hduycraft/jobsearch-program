@@ -14,6 +14,7 @@ The goal is not to automate job applications. The app helps the user understand 
 - Generates interview preparation questions and study topics.
 - Stores generated CV, cover letter, and interview prep outputs for later review.
 - Imports manually collected jobs in bulk.
+- Indexes jobs for local semantic-style search and retrieves relevant profile context.
 
 ## Why This Project Exists
 
@@ -32,10 +33,11 @@ It is also designed as a learning project for backend development, API design, d
 - pytest
 - Rule-based NLP first
 - Optional local LLM support through Ollama
+- Local deterministic embedding/search foundation
 
 ## Current Status
 
-Phase 11 is complete.
+Phase 12 is complete.
 
 The current app includes:
 
@@ -51,14 +53,16 @@ The current app includes:
 - Optional LLM provider interface with `none`, `fake`, and local `ollama` providers.
 - Generated asset endpoints for saving and listing generated outputs per job.
 - Manual bulk job import endpoint.
+- Semantic search endpoints for job indexing, job search, and profile context retrieval.
 - SQLAlchemy job model.
 - SQLAlchemy application model linked one-to-one with jobs.
 - SQLAlchemy profile model.
 - SQLAlchemy generated asset model linked many-to-one with jobs.
-- Alembic migrations for the jobs, applications, profiles, and generated assets tables.
+- SQLAlchemy job embedding model linked one-to-one with jobs.
+- Alembic migrations for the jobs, applications, profiles, generated assets, and job embeddings tables.
 - Docker Compose PostgreSQL service.
 - Swagger/OpenAPI availability tests.
-- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, LLM provider, generated asset, and import endpoint tests.
+- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, LLM provider, generated asset, import, and semantic search endpoint tests.
 - A detailed phase roadmap in `PROJECT_ROADMAP.md`.
 
 Run the API:
@@ -94,3 +98,13 @@ incoming fields, skips duplicate jobs, and saves accepted records into the
 existing `jobs` table. The app does not fetch jobs from public sources yet.
 Future public-source imports should use allowed APIs or feeds only, without
 scraping protected pages or automating login.
+
+## Semantic Search
+
+`POST /semantic-search/jobs/index` stores deterministic local vectors for the
+current jobs. `POST /semantic-search/jobs/search` searches those indexed jobs,
+and `POST /semantic-search/profile-context` retrieves the candidate profile
+summary/projects that are most relevant to a selected job.
+
+This is a tested foundation for later pgvector or Qdrant work. It does not call
+an external embedding model yet.

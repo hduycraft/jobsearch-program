@@ -14,10 +14,11 @@ It helps a candidate keep job opportunities organized, compare their profile aga
 - Generates interview preparation questions and study topics.
 - Stores generated outputs for later review.
 - Imports manually collected jobs in bulk.
+- Indexes jobs for local semantic-style search and retrieves relevant profile context.
 
 ## Current Status
 
-Phase 11 is complete.
+Phase 12 is complete.
 
 The app currently includes:
 
@@ -33,15 +34,17 @@ The app currently includes:
 - Optional LLM provider interface with `none`, `fake`, and local `ollama` providers.
 - Generated asset storage endpoints under `/jobs/{job_id}/generated-assets`
 - Manual bulk job import endpoint under `/imports/jobs`
+- Semantic search endpoints under `/semantic-search`
 - SQLAlchemy ORM model for jobs.
 - SQLAlchemy ORM model for applications with a one-to-one job relationship.
 - SQLAlchemy ORM model for candidate profiles.
 - SQLAlchemy ORM model for generated assets linked to jobs.
-- Alembic migrations for the `jobs`, `applications`, `profiles`, and `generated_assets` tables.
+- SQLAlchemy ORM model for stored job embeddings.
+- Alembic migrations for the `jobs`, `applications`, `profiles`, `generated_assets`, and `job_embeddings` tables.
 - PostgreSQL configuration via `DATABASE_URL`.
 - Docker Compose service for local PostgreSQL.
 - Swagger/OpenAPI availability tests.
-- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, generated asset, and import endpoint tests.
+- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, generated asset, import, and semantic search endpoint tests.
 - A detailed build plan in [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md).
 
 ## Current Data Relationships
@@ -82,6 +85,18 @@ generated_assets
 |-- asset_type
 |-- title
 |-- content
+|-- created_at
+`-- updated_at
+
+jobs
+`-- job_embeddings 1:1
+    |
+    v
+job_embeddings
+|-- id
+|-- job_id -> jobs.id
+|-- content_hash
+|-- embedding
 |-- created_at
 `-- updated_at
 ```
@@ -138,8 +153,10 @@ used to improve CV suggestions and interview prep after the rule-based output
 has already been built. If Ollama is unavailable, the app falls back to the
 rule-based output.
 
-`EMBEDDING_MODEL` is present for later vector search or RAG work. The project
-does not currently need a separate LlamaIndex setup file.
+`EMBEDDING_MODEL` is still reserved for future real embedding providers. Phase
+12 currently uses a deterministic local embedding service in
+`app/services/semantic_search.py` so the API can be tested without external AI
+services, Qdrant, or a PostgreSQL extension.
 
 ## Run Locally
 
@@ -185,12 +202,18 @@ $env:OLLAMA_BASE_URL="http://localhost:11434"
 ```
 
 The app still works without an LLM API key. `EMBEDDING_MODEL` is also available
-for later vector search or RAG work, but the current CV and interview endpoints
-use text generation through the LLM provider.
+for later provider-backed vector search or RAG work, but the current CV and
+interview endpoints use text generation through the LLM provider.
 
 `POST /imports/jobs` imports manually collected job payloads, normalizes common
 fields, skips duplicates, and saves accepted jobs into the existing `/jobs`
 tracker. It does not fetch jobs from public sources yet.
+
+Semantic search starts with `POST /semantic-search/jobs/index`, which stores
+local job vectors in `job_embeddings`. After indexing, use
+`POST /semantic-search/jobs/search` to find similar indexed jobs, or
+`POST /semantic-search/profile-context` to retrieve the profile summary/projects
+that best match a selected job.
 
 Run tests:
 
