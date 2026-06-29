@@ -1,4 +1,8 @@
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.routes_analysis import router as analysis_router
 from app.api.routes_applications import router as applications_router
@@ -22,7 +26,16 @@ app.include_router(jobs_router)
 app.include_router(profiles_router)
 app.include_router(semantic_search_router)
 
+FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
+
+app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+
 
 @app.get("/health")
 def health_check() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/", include_in_schema=False)
+def frontend() -> FileResponse:
+    return FileResponse(FRONTEND_DIR / "index.html")

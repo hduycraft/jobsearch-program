@@ -1,6 +1,6 @@
 # CareerMatch Assistant
 
-CareerMatch Assistant is a backend-focused project for managing a job search, comparing a candidate profile against job descriptions, and preparing for interviews.
+CareerMatch Assistant is a FastAPI project for managing a job search, comparing a candidate profile against job descriptions, and preparing for interviews through an API and a simple browser UI.
 
 The goal is not to automate job applications. The app helps the user understand each opportunity, improve application materials, and prepare for interviews while keeping the final decisions and submissions human-controlled.
 
@@ -37,7 +37,7 @@ It is also designed as a learning project for backend development, API design, d
 
 ## Current Status
 
-Phase 12 is complete.
+Phase 13 is complete.
 
 The current app includes:
 
@@ -54,6 +54,7 @@ The current app includes:
 - Generated asset endpoints for saving and listing generated outputs per job.
 - Manual bulk job import endpoint.
 - Semantic search endpoints for job indexing, job search, and profile context retrieval.
+- Browser UI served by FastAPI at `/`.
 - SQLAlchemy job model.
 - SQLAlchemy application model linked one-to-one with jobs.
 - SQLAlchemy profile model.
@@ -62,7 +63,7 @@ The current app includes:
 - Alembic migrations for the jobs, applications, profiles, generated assets, and job embeddings tables.
 - Docker Compose PostgreSQL service.
 - Swagger/OpenAPI availability tests.
-- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, LLM provider, generated asset, import, and semantic search endpoint tests.
+- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, LLM provider, generated asset, import, semantic search, and frontend endpoint tests.
 - A detailed phase roadmap in `PROJECT_ROADMAP.md`.
 
 Run the API:
@@ -72,6 +73,12 @@ uvicorn app.main:app --reload
 ```
 
 Open:
+
+```text
+http://localhost:8000/
+```
+
+Health check:
 
 ```text
 http://localhost:8000/health

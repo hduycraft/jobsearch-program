@@ -18,7 +18,7 @@ It helps a candidate keep job opportunities organized, compare their profile aga
 
 ## Current Status
 
-Phase 12 is complete.
+Phase 13 is complete.
 
 The app currently includes:
 
@@ -35,6 +35,8 @@ The app currently includes:
 - Generated asset storage endpoints under `/jobs/{job_id}/generated-assets`
 - Manual bulk job import endpoint under `/imports/jobs`
 - Semantic search endpoints under `/semantic-search`
+- Browser UI served by FastAPI at `/`
+- Frontend assets served from `/static`
 - SQLAlchemy ORM model for jobs.
 - SQLAlchemy ORM model for applications with a one-to-one job relationship.
 - SQLAlchemy ORM model for candidate profiles.
@@ -44,7 +46,7 @@ The app currently includes:
 - PostgreSQL configuration via `DATABASE_URL`.
 - Docker Compose service for local PostgreSQL.
 - Swagger/OpenAPI availability tests.
-- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, generated asset, import, and semantic search endpoint tests.
+- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, generated asset, import, semantic search, and frontend endpoint tests.
 - A detailed build plan in [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md).
 
 ## Current Data Relationships
@@ -173,13 +175,30 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Start PostgreSQL:
+Choose a database for local runtime.
+
+Option A, PostgreSQL with Docker:
 
 ```powershell
 docker compose up -d postgres
 ```
 
-Apply database migrations:
+The default `DATABASE_URL` points to this local PostgreSQL service:
+
+```text
+postgresql+psycopg://careermatch:careermatch@localhost:5432/careermatch
+```
+
+Option B, SQLite for a quick local demo without PostgreSQL:
+
+```powershell
+$env:DATABASE_URL="sqlite:///./careermatch.db"
+```
+
+Use the SQLite command in the same PowerShell session where you run migrations
+and start the API. If `DATABASE_URL` is not set, the app will try PostgreSQL.
+
+Apply database migrations to the selected database:
 
 ```powershell
 .\.venv\Scripts\alembic.exe upgrade head
@@ -224,10 +243,16 @@ python -m pytest
 Start the API:
 
 ```powershell
-uvicorn app.main:app --reload
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
 Open:
+
+```text
+http://localhost:8000/
+```
+
+Health check:
 
 ```text
 http://localhost:8000/health
@@ -246,6 +271,12 @@ API docs:
 ```text
 http://localhost:8000/docs
 ```
+
+If the browser shows a `500 Internal Server Error` for routes such as
+`/applications`, check the database first. `GET /health` can pass even when the
+database is unavailable because the health endpoint does not query tables.
+Start PostgreSQL or set the SQLite `DATABASE_URL`, run Alembic migrations, then
+restart the API.
 
 ## Safety Note
 

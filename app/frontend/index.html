@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CareerMatch Assistant</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">CareerMatch Assistant</p>
+        <h1>Job Search Workspace</h1>
+      </div>
+      <nav class="tabs" aria-label="Primary">
+        <button class="tab is-active" data-tab="dashboard">Dashboard</button>
+        <button class="tab" data-tab="jobs">Jobs</button>
+        <button class="tab" data-tab="profile">Profile</button>
+        <button class="tab" data-tab="analysis">Analysis</button>
+        <button class="tab" data-tab="applications">Applications</button>
+        <button class="tab" data-tab="search">Search</button>
+      </nav>
+      <div class="header-actions">
+        <button class="ghost" id="refresh-data" type="button">Refresh</button>
+        <a class="ghost" href="/docs">API Docs</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel is-active" id="dashboard-panel">
+        <div class="stat-grid">
+          <article class="stat">
+            <span>Jobs</span>
+            <strong id="job-count">0</strong>
+          </article>
+          <article class="stat">
+            <span>Profiles</span>
+            <strong id="profile-count">0</strong>
+          </article>
+          <article class="stat">
+            <span>Applications</span>
+            <strong id="application-count">0</strong>
+          </article>
+          <article class="stat">
+            <span>Selected Job</span>
+            <strong id="selected-job-label">None</strong>
+          </article>
+        </div>
+        <div class="two-column">
+          <section>
+            <div class="section-heading">
+              <h2>Recent Jobs</h2>
+              <button class="secondary" data-tab-target="jobs" type="button">Open Jobs</button>
+            </div>
+            <div class="list" id="dashboard-jobs"></div>
+          </section>
+          <section>
+            <div class="section-heading">
+              <h2>Application Pipeline</h2>
+              <button class="secondary" data-tab-target="applications" type="button">Open Tracker</button>
+            </div>
+            <div class="list" id="dashboard-applications"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="panel" id="jobs-panel">
+        <div class="two-column">
+          <section>
+            <div class="section-heading">
+              <h2>Jobs</h2>
+              <button class="secondary" id="reload-jobs" type="button">Reload</button>
+            </div>
+            <div class="list" id="jobs-list"></div>
+          </section>
+          <section>
+            <h2>Add Job</h2>
+            <form class="form" id="job-form">
+              <label>Title<input name="title" required></label>
+              <label>Company<input name="company" required></label>
+              <label>Location<input name="location"></label>
+              <label>Source<input name="source" placeholder="manual"></label>
+              <label>Source URL<input name="source_url" type="url"></label>
+              <label>Seniority<input name="seniority"></label>
+              <label>Description<textarea name="description" rows="5"></textarea></label>
+              <label>Requirements<textarea name="requirements" rows="3" placeholder="One requirement per line"></textarea></label>
+              <button type="submit">Add Job</button>
+            </form>
+            <h2>Bulk Import</h2>
+            <form class="form" id="import-form">
+              <label>Source Label<input name="source_name" placeholder="manual-bulk-import"></label>
+              <label>Jobs JSON<textarea name="jobs_json" rows="8" placeholder='[{"title":"Backend Developer","company":"Example Co","description":"Python and FastAPI"}]'></textarea></label>
+              <button type="submit">Import Jobs</button>
+            </form>
+          </section>
+        </div>
+      </section>
+
+      <section class="panel" id="profile-panel">
+        <div class="two-column">
+          <section>
+            <div class="section-heading">
+              <h2>Profiles</h2>
+              <button class="secondary" id="reload-profiles" type="button">Reload</button>
+            </div>
+            <div class="list" id="profiles-list"></div>
+          </section>
+          <section>
+            <h2>Add Profile</h2>
+            <form class="form" id="profile-form">
+              <label>Target Roles<textarea name="target_roles" rows="2" placeholder="One role per line"></textarea></label>
+              <label>Skills<textarea name="skills" rows="3" placeholder="One skill per line"></textarea></label>
+              <label>Experience Summary<textarea name="experience_summary" rows="5"></textarea></label>
+              <label>Projects JSON<textarea name="projects_json" rows="7" placeholder='[{"name":"API tracker","skills":["FastAPI","SQL"]}]'></textarea></label>
+              <button type="submit">Add Profile</button>
+            </form>
+          </section>
+        </div>
+      </section>
+
+      <section class="panel" id="analysis-panel">
+        <div class="toolbar">
+          <label>Profile<select id="analysis-profile"></select></label>
+          <label>Job<select id="analysis-job"></select></label>
+          <button id="run-match" type="button">Match</button>
+          <button id="run-cv" type="button">CV Suggestions</button>
+          <button id="run-interview" type="button">Interview Prep</button>
+        </div>
+        <div class="result-grid">
+          <section>
+            <h2>Match</h2>
+            <pre class="result" id="match-result">No result yet.</pre>
+          </section>
+          <section>
+            <h2>CV Suggestions</h2>
+            <pre class="result" id="cv-result">No result yet.</pre>
+          </section>
+          <section>
+            <h2>Interview Prep</h2>
+            <pre class="result" id="interview-result">No result yet.</pre>
+          </section>
+        </div>
+      </section>
+
+      <section class="panel" id="applications-panel">
+        <div class="two-column">
+          <section>
+            <div class="section-heading">
+              <h2>Applications</h2>
+              <button class="secondary" id="reload-applications" type="button">Reload</button>
+            </div>
+            <div class="list" id="applications-list"></div>
+          </section>
+          <section>
+            <h2>Add Application</h2>
+            <form class="form" id="application-form">
+              <label>Job<select name="job_id" id="application-job"></select></label>
+              <label>Status<select name="status">
+                <option>saved</option>
+                <option>interested</option>
+                <option>cv_tailored</option>
+                <option>applied</option>
+                <option>interview</option>
+                <option>rejected</option>
+                <option>offer</option>
+                <option>archived</option>
+              </select></label>
+              <label>Next Action<input name="next_action"></label>
+              <label>Notes<textarea name="notes" rows="4"></textarea></label>
+              <button type="submit">Add Application</button>
+            </form>
+          </section>
+        </div>
+      </section>
+
+      <section class="panel" id="search-panel">
+        <div class="two-column">
+          <section>
+            <div class="section-heading">
+              <h2>Semantic Jobs</h2>
+              <button class="secondary" id="index-jobs" type="button">Index Jobs</button>
+            </div>
+            <form class="form inline-form" id="search-form">
+              <label>Query<input name="query" required></label>
+              <button type="submit">Search</button>
+            </form>
+            <pre class="result" id="search-result">No result yet.</pre>
+          </section>
+          <section>
+            <h2>Profile Context</h2>
+            <div class="toolbar compact">
+              <label>Profile<select id="context-profile"></select></label>
+              <label>Job<select id="context-job"></select></label>
+              <button id="get-context" type="button">Retrieve</button>
+            </div>
+            <pre class="result" id="context-result">No result yet.</pre>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

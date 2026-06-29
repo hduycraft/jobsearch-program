@@ -6,7 +6,7 @@ The project is built in small working phases. Future sessions should read this r
 
 ## Current Status
 
-- Phase 12 is complete.
+- Phase 13 is complete.
 - The app has a minimal FastAPI backend and database-backed job tracker.
 - `GET /health` returns `{"status": "ok"}`.
 - Swagger UI and OpenAPI schema are covered by tests.
@@ -36,13 +36,17 @@ The project is built in small working phases. Future sessions should read this r
 - Job embeddings are stored in the database as deterministic local vectors.
 - Similar indexed jobs can be searched through `/semantic-search/jobs/search`.
 - Relevant profile summary/project context can be retrieved for a selected job.
+- FastAPI serves a simple browser UI at `/`.
+- Frontend static assets are served from `/static`.
+- The UI can view/create jobs, profiles, and applications, run match/CV/interview analysis, and use semantic search.
+- Frontend entry point and static assets are covered by tests.
 - Alembic is configured with an initial `jobs` table migration.
 - Alembic includes an `applications` table migration.
 - Alembic includes a `profiles` table migration.
 - Alembic includes a `generated_assets` table migration.
 - Alembic includes a `job_embeddings` table migration.
 - Docker Compose can start a local PostgreSQL database.
-- Next phase: Phase 13, Frontend.
+- Next phase: Phase 14, Docker and Deployment.
 
 ## Ethical Scope
 
@@ -114,10 +118,10 @@ Dev tools:
 - Docker Compose later
 - ruff or black optional
 
-Frontend later:
+Frontend:
 
-- Next.js/React, or
-- Streamlit if a faster demo UI is preferred.
+- FastAPI-served HTML/CSS/JavaScript demo UI now.
+- Next.js/React can replace or extend the static frontend later if the project needs a larger frontend toolchain.
 
 ## Current File Tree
 
@@ -135,6 +139,10 @@ careermatch-assistant/
 |   |   |-- routes_jobs.py
 |   |   |-- routes_profiles.py
 |   |   `-- routes_semantic_search.py
+|   |-- frontend/
+|   |   |-- app.js
+|   |   |-- index.html
+|   |   `-- styles.css
 |   |-- core/
 |   |   |-- __init__.py
 |   |   |-- config.py
@@ -177,6 +185,7 @@ careermatch-assistant/
 |   |-- conftest.py
 |   |-- test_analysis.py
 |   |-- test_applications.py
+|   |-- test_frontend.py
 |   |-- test_generated_assets.py
 |   |-- test_imports.py
 |   |-- test_jobs.py
@@ -1065,25 +1074,37 @@ Commit message suggestion:
 Add semantic job search foundation
 ```
 
-### Phase 13: Frontend
+### Phase 13: Frontend - Complete
 
 Goal: Build a simple demo-friendly user interface.
 
-Preferred:
+Built:
 
-- Next.js
-- Tailwind CSS
-- shadcn/ui
+- FastAPI-served static frontend in `app/frontend`.
+- Root page at `/`.
+- Static JavaScript and CSS served from `/static`.
+- Frontend tests for the root page and static assets.
 
-Pages:
+Views:
 
 - Dashboard
 - Jobs
-- Job detail
 - Profile
 - Match analysis
+- CV suggestions
 - Interview prep
 - Application tracker
+- Semantic job search
+- Profile context retrieval
+
+Implemented behavior:
+
+- `GET /` returns the browser UI.
+- The UI loads jobs, profiles, and applications from the existing API.
+- Jobs, profiles, manually collected bulk jobs, and application records can be added from the browser.
+- Match scoring, CV suggestions, interview prep, semantic job indexing/search, and profile context retrieval can be triggered from the browser.
+- The frontend uses the same FastAPI origin, so no separate CORS setup or Node toolchain is required for this first demo slice.
+- Next.js, Tailwind CSS, and shadcn/ui remain good future options if the frontend grows beyond this simple demo surface.
 
 Learning focus:
 
