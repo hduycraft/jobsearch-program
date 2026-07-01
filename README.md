@@ -18,7 +18,7 @@ It helps a candidate keep job opportunities organized, compare their profile aga
 
 ## Current Status
 
-Phase 13 is complete.
+Phase 14 is complete.
 
 The app currently includes:
 
@@ -44,9 +44,11 @@ The app currently includes:
 - SQLAlchemy ORM model for stored job embeddings.
 - Alembic migrations for the `jobs`, `applications`, `profiles`, `generated_assets`, and `job_embeddings` tables.
 - PostgreSQL configuration via `DATABASE_URL`.
-- Docker Compose service for local PostgreSQL.
+- Dockerfile for running the FastAPI app in a container.
+- Docker Compose services for the app and local PostgreSQL.
+- Container startup runs Alembic migrations before starting the API.
 - Swagger/OpenAPI availability tests.
-- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, generated asset, import, semantic search, and frontend endpoint tests.
+- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, generated asset, import, semantic search, frontend, and deployment file tests.
 - A detailed build plan in [PROJECT_ROADMAP.md](PROJECT_ROADMAP.md).
 
 ## Current Data Relationships
@@ -125,6 +127,8 @@ profiles.id  +  jobs.id
 - Alembic
 - PostgreSQL
 - pytest
+- Docker
+- Docker Compose
 - Rule-based NLP first, optional local LLM support through Ollama
 - Optional deterministic fake LLM provider for tests and demos
 
@@ -160,7 +164,35 @@ rule-based output.
 `app/services/semantic_search.py` so the API can be tested without external AI
 services, Qdrant, or a PostgreSQL extension.
 
-## Run Locally
+## Run with Docker
+
+Build and start the API plus PostgreSQL:
+
+```powershell
+docker compose up --build
+```
+
+Open:
+
+```text
+http://localhost:8000/
+```
+
+The `app` container waits for the `postgres` health check, runs `alembic upgrade head`, then starts Uvicorn on port `8000`.
+
+Stop the containers:
+
+```powershell
+docker compose down
+```
+
+Remove the PostgreSQL volume if you want a completely fresh database:
+
+```powershell
+docker compose down -v
+```
+
+## Run Locally Without the App Container
 
 Create and activate a virtual environment:
 

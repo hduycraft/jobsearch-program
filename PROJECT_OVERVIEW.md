@@ -37,7 +37,7 @@ It is also designed as a learning project for backend development, API design, d
 
 ## Current Status
 
-Phase 13 is complete.
+Phase 14 is complete.
 
 The current app includes:
 
@@ -61,12 +61,20 @@ The current app includes:
 - SQLAlchemy generated asset model linked many-to-one with jobs.
 - SQLAlchemy job embedding model linked one-to-one with jobs.
 - Alembic migrations for the jobs, applications, profiles, generated assets, and job embeddings tables.
-- Docker Compose PostgreSQL service.
+- Dockerfile for the FastAPI app.
+- Docker Compose services for the app and PostgreSQL.
+- Container startup runs Alembic migrations before starting the API.
 - Swagger/OpenAPI availability tests.
-- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, LLM provider, generated asset, import, semantic search, and frontend endpoint tests.
+- Job, application, profile, analysis, match scoring, CV suggestion, interview prep, LLM provider, generated asset, import, semantic search, frontend, and deployment file tests.
 - A detailed phase roadmap in `PROJECT_ROADMAP.md`.
 
-Run the API:
+Run the app with Docker:
+
+```powershell
+docker compose up --build
+```
+
+Run the API without the app container:
 
 ```powershell
 uvicorn app.main:app --reload

@@ -6,7 +6,7 @@ The project is built in small working phases. Future sessions should read this r
 
 ## Current Status
 
-- Phase 13 is complete.
+- Phase 14 is complete.
 - The app has a minimal FastAPI backend and database-backed job tracker.
 - `GET /health` returns `{"status": "ok"}`.
 - Swagger UI and OpenAPI schema are covered by tests.
@@ -45,8 +45,10 @@ The project is built in small working phases. Future sessions should read this r
 - Alembic includes a `profiles` table migration.
 - Alembic includes a `generated_assets` table migration.
 - Alembic includes a `job_embeddings` table migration.
-- Docker Compose can start a local PostgreSQL database.
-- Next phase: Phase 14, Docker and Deployment.
+- Docker Compose can start the FastAPI app and local PostgreSQL database together.
+- The app container runs Alembic migrations before starting Uvicorn.
+- Deployment files are covered by tests.
+- Next phase: MVP polish, screenshots/demo material, or optional CI/CD.
 
 ## Ethical Scope
 
@@ -115,7 +117,7 @@ Dev tools:
 - Python virtual environment
 - `requirements.txt`
 - pytest
-- Docker Compose later
+- Docker Compose
 - ruff or black optional
 
 Frontend:
@@ -185,6 +187,7 @@ careermatch-assistant/
 |   |-- conftest.py
 |   |-- test_analysis.py
 |   |-- test_applications.py
+|   |-- test_deployment_files.py
 |   |-- test_frontend.py
 |   |-- test_generated_assets.py
 |   |-- test_imports.py
@@ -193,8 +196,10 @@ careermatch-assistant/
 |   |-- test_profiles.py
 |   |-- test_semantic_search.py
 |   `-- test_swagger.py
+|-- .dockerignore
 |-- .env.example
 |-- alembic.ini
+|-- Dockerfile
 |-- docker-compose.yml
 |-- PROJECT_ROADMAP.md
 |-- PROJECT_OVERVIEW.md
@@ -318,6 +323,25 @@ Generated asset types:
 
 ## Setup
 
+Run the full app with Docker:
+
+```powershell
+docker compose up --build
+```
+
+This starts PostgreSQL, waits for the database health check, runs Alembic
+migrations in the app container, and serves the browser UI at:
+
+```text
+http://localhost:8000/
+```
+
+Stop the Docker stack:
+
+```powershell
+docker compose down
+```
+
 Create and activate a virtual environment:
 
 ```powershell
@@ -331,7 +355,7 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Start PostgreSQL:
+Start only PostgreSQL:
 
 ```powershell
 docker compose up -d postgres
@@ -349,7 +373,7 @@ Run tests:
 pytest
 ```
 
-Run the API:
+Run the API without the app container:
 
 ```powershell
 uvicorn app.main:app --reload
@@ -1123,17 +1147,28 @@ Commit message suggestion:
 Add initial frontend interface
 ```
 
-### Phase 14: Docker and Deployment
+### Phase 14: Docker and Deployment - Complete
 
 Goal: Make the project easy to run and show.
 
-Build:
+Built:
 
 - Dockerfile
-- `docker-compose.yml`
+- `.dockerignore`
+- `docker-compose.yml` app service
 - PostgreSQL container
-- Optional Redis container
 - README deployment instructions
+- Deployment file tests
+
+Implemented behavior:
+
+- `docker compose up --build` builds the FastAPI image and starts the app with PostgreSQL.
+- The app container uses the Compose `postgres` hostname through `DATABASE_URL`.
+- The app waits for the PostgreSQL health check before startup.
+- Container startup runs `alembic upgrade head` before starting Uvicorn.
+- The app is served on `http://localhost:8000/`.
+- Optional LLM settings can still be passed through environment variables.
+- Redis was not added because the current app has no queue, cache, or background-worker dependency.
 
 Optional:
 
